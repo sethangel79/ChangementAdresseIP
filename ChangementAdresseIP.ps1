@@ -29,92 +29,101 @@ $NomConnexion = "Ethernet 2"
 ######## Programmation ######################################
 
 
-function Get-AdressesIP {
-     foreach ($elem in $Configuration) {
-          $tab = $elem -split ","
+# Restart this script in elevated mode if this user is not an administrator.
+Write-Host 'Checking for Administrator Access...'
+If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {   
+     Write-Host 'Le script n''a pas été lanné avec des droits administrateurs, Essai d''élévation...'
+     $arguments = "& '" + $myinvocation.mycommand.definition + "'"
+     Start-Process powershell -Verb runAs -ArgumentList $arguments
+     Break
+} else {
+     function Get-AdressesIP {
+          foreach ($elem in $Configuration) {
+               $tab = $elem -split ","
 
-          #Write-Host $tab.count
-          #Si la chaine est coorecte
-          if ($tab.count -eq 6) {
-               write-host $tab[0] "-" $tab[1] "-" $tab[2] "-" $tab[3] "-" $tab[4] "-" $tab[5]
-               $myAdresse = [PSCustomObject]@{
-                    index = [int]$tab[0]
-                    nom = $tab[1]
-                    adresseIP = $tab[2]
-                    masque = [int]$tab[3]
-                    passerelle = $tab[4]
-                    serveurDNS = $tab[5]
-               }
-               #Ajout de l'objet adresse au tableau
-               $adressesIP.Add($myAdresse)
-
-          }
-     }
-}
-
-function Show-Menu {
-    param (
-        [string]$Title = 'Sélection d''une connexion réseau'
-    )
-    #Clear-Host
-    Write-Host "================ $Title ================"
-    
-    foreach ($elem in $AdressesIP) {
-          Write-Host $elem.index ": " $elem.nom
-    }
-    Write-Host "Q: Taper 'Q' pour quitter."
-}
-
-Get-AdressesIP
-
-do
-{
-     #Write-host $AdressesIP
-     Show-Menu
-     $entree = Read-Host "Faites un choix"
-
-     if ($entree -eq 'q') {
-          return
-     } else {
-          $index = [int]$entree
-          foreach ($elt in $AdressesIP) {
-               if ($elt.index -eq $index) {
-                    write-host $elt.nom "sélectionné"
-
-                    #Adresse IP
-                    #si DHCP
-                    Set-NetIPInterface -InterfaceAlias $NomConnexion -Dhcp Enabled
-
-                    #Suppression de la passerelle si elle existe
-                    try {
-                        Remove-NetRoute -InterfaceAlias $NomConnexion -Confirm:$false
-                    } catch {
-                        Write-Host "Aucune passerelle à supprimer"
+               #Write-Host $tab.count
+               #Si la chaine est coorecte
+               if ($tab.count -eq 6) {
+                    write-host $tab[0] "-" $tab[1] "-" $tab[2] "-" $tab[3] "-" $tab[4] "-" $tab[5]
+                    $myAdresse = [PSCustomObject]@{
+                         index = [int]$tab[0]
+                         nom = $tab[1]
+                         adresseIP = $tab[2]
+                         masque = [int]$tab[3]
+                         passerelle = $tab[4]
+                         serveurDNS = $tab[5]
                     }
+                    #Ajout de l'objet adresse au tableau
+                    $adressesIP.Add($myAdresse)
 
-                    if ($elt.adresseIP -ne '0') {
-                        if ($elt.passerelle -eq '0') {                             
-                            New-NetIpAddress –InterfaceAlias $NomConnexion -IpAddress $elt.adresseIP -PrefixLength $elt.masque
-                        } else {
-                            New-NetIpAddress –InterfaceAlias $NomConnexion -IpAddress $elt.adresseIP -PrefixLength $elt.masque -DefaultGateway $elt.passerelle
-                        }
-                    }
-
-                    #DNS
-                    if ($elt.serveurDNS -eq '0') {
-                         Set-DnsClientServerAddress –InterfaceAlias $NomConnexion -ResetServerAddresses
-                    } else {
-                         Set-DnsClientServerAddress -InterfaceAlias $NomConnexion -ServerAddresses $elt.serveurDNS
-                    }
-
-                    ipconfig
-
-                    exit
                }
           }
      }
-     pause
-}
-until ($entree -eq 'q')
 
+     function Show-Menu {
+     param (
+          [string]$Title = 'Sélection d''une connexion réseau'
+     )
+     #Clear-Host
+     Write-Host "================ $Title ================"
+     
+     foreach ($elem in $AdressesIP) {
+               Write-Host $elem.index ": " $elem.nom
+     }
+     Write-Host "Q: Taper 'Q' pour quitter."
+     }
+
+
+     Get-AdressesIP
+
+     do
+     {
+          #Write-host $AdressesIP
+          Show-Menu
+          $entree = Read-Host "Faites un choix"
+
+          if ($entree -eq 'q') {
+               return
+          } else {
+               $index = [int]$entree
+               foreach ($elt in $AdressesIP) {
+                    if ($elt.index -eq $index) {
+                         write-host $elt.nom "sélectionné"
+
+                         #Adresse IP
+                         #si DHCP
+                         Set-NetIPInterface -InterfaceAlias $NomConnexion -Dhcp Enabled
+
+                         #Suppression de la passerelle si elle existe
+                         try {
+                              Remove-NetRoute -InterfaceAlias $NomConnexion -Confirm:$false
+                         } catch {
+                              Write-Host "Aucune passerelle à supprimer"
+                         }
+
+                         if ($elt.adresseIP -ne '0') {
+                         if ($elt.passerelle -eq '0') {                             
+                              New-NetIpAddress –InterfaceAlias $NomConnexion -IpAddress $elt.adresseIP -PrefixLength $elt.masque
+                         } else {
+                              New-NetIpAddress –InterfaceAlias $NomConnexion -IpAddress $elt.adresseIP -PrefixLength $elt.masque -DefaultGateway $elt.passerelle
+                         }
+                         }
+
+                         #DNS
+                         if ($elt.serveurDNS -eq '0') {
+                              Set-DnsClientServerAddress –InterfaceAlias $NomConnexion -ResetServerAddresses
+                         } else {
+                              Set-DnsClientServerAddress -InterfaceAlias $NomConnexion -ServerAddresses $elt.serveurDNS
+                         }
+
+                         #Start-Sleep -Seconds 1.5
+                         
+                         exit
+                    }
+               }
+          }
+     }
+     until ($entree -eq 'q')
+
+}
 
