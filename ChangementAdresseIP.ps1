@@ -37,6 +37,54 @@ If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
      Start-Process powershell -Verb runAs -ArgumentList $arguments
      Break
 } else {
+
+     function Limit-AdresseIP {
+          param (
+               [string]$adresseIP
+          )
+
+          $Erreur = $FALSE
+          $tab = $adressesIP -split "."
+          if ($tab.count -eq 4) {
+               foreach ($elt in $tab) {
+                    try {
+                    $chiffre = [int]$elt
+                    if ($chiffre -lt 0 -or $chiffre -gt 255) {
+                         $Erreur = $TRUE
+                    }
+                    } catch {
+                         $Erreur = $TRUE
+                    }
+
+               }
+          }
+
+          if ($Erreur -eq $TRUE) {
+               throw $adressesIP + " n''a pas le format d'une adresse IP"
+          }
+     }
+
+     function Limit-Masque {
+          param (
+               [int]$masque
+          )
+
+          if ($masque -lt 0 -or $masque -gt 32) {
+               throw $masque + " n''est pas dans une plage valide"
+          }
+     }
+
+     function Limit-Chaine {
+          param (
+               [string]$chaine
+          )
+
+          $NBChar = 40
+          if ($chaine.count -gt $NBChar) {
+               throw $chaine + " est trop long : limité à " + $NBChar
+          }
+     }
+
      function Get-AdressesIP {
           foreach ($elem in $Configuration) {
                $tab = $elem -split ","
@@ -45,17 +93,27 @@ If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
                #Si la chaine est coorecte
                if ($tab.count -eq 6) {
                     write-host $tab[0] "-" $tab[1] "-" $tab[2] "-" $tab[3] "-" $tab[4] "-" $tab[5]
-                    $myAdresse = [PSCustomObject]@{
-                         index = [int]$tab[0]
-                         nom = $tab[1]
-                         adresseIP = $tab[2]
-                         masque = [int]$tab[3]
-                         passerelle = $tab[4]
-                         serveurDNS = $tab[5]
-                    }
-                    #Ajout de l'objet adresse au tableau
-                    $adressesIP.Add($myAdresse)
+                    try {
+                         #Test
+                         Limit-Chaine -chaine $tab[1]
+                         Limit-AdresseIP -AdresseIP $tab[2]
+                         Limit-Masque -masque $tab[3]
+                         Limit-AdresseIP -AdresseIP $tab[4]
+                         Limit-AdresseIP -AdresseIP $tab[5]
 
+                         $myAdresse = [PSCustomObject]@{
+                              index = [int]$tab[0]
+                              nom = $tab[1]
+                              adresseIP = $tab[2]
+                              masque = [int]$tab[3]
+                              passerelle = $tab[4]
+                              serveurDNS = $tab[5]
+                         }
+                         #Ajout de l'objet adresse au tableau
+                         $adressesIP.Add($myAdresse)
+                    } catch {
+                         Write-Host $elt "n''a pas été ajoutée :" $_
+                    }
                }
           }
      }
