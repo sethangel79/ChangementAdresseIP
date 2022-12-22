@@ -85,6 +85,22 @@ If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
           }
      }
 
+     function Get-Masque {
+          param (
+               [string]$adressesIP
+          )
+          $tab = $adressesIP -split "."
+          $premierNombre = [int]$tab[0]
+          if ($premierNombre -ge 0 -and $premierNombre -le 126) {
+               return 8
+          } elseif ($premierNombre -ge 128 -and $premierNombre -le 191) {
+               return 16
+          } else {
+               return 24
+          }
+     }
+
+
      function Get-AdressesIP {
           foreach ($elem in $Configuration) {
                $tab = $elem -split ","
@@ -147,7 +163,19 @@ If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
                $adresseIPManuelle = Read-Host "Entrer une adresse IP"
                try {
                     Limit-AdresseIP -AdresseIP $adresseIPManuelle
-                    New-NetIpAddress –InterfaceAlias $NomConnexion -IpAddress $adresseIPManuelle -PrefixLength 24
+                    $masque = Get-masque -AdresseIP $adresseIPManuelle
+
+                    Set-NetIPInterface -InterfaceAlias $NomConnexion -Dhcp Enabled
+
+                    #Suppression de la passerelle si elle existe
+                    try {
+                         Remove-NetRoute -InterfaceAlias $NomConnexion -Confirm:$false
+                    } catch {
+                         Write-Host "Aucune passerelle à supprimer"
+                    }
+
+                    #Definition de l'adresse
+                    New-NetIpAddress –InterfaceAlias $NomConnexion -IpAddress $adresseIPManuelle -PrefixLength $masque
                     exit
                } catch {
                     Write-Host $adresseIPmanuelle "invalide"
