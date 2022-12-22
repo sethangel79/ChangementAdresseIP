@@ -128,6 +128,7 @@ If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
      foreach ($elem in $AdressesIP) {
                Write-Host $elem.index ": " $elem.nom
      }
+     Write-Host "M: Taper 'M' pour entrer une adresse IP."
      Write-Host "Q: Taper 'Q' pour quitter."
      }
 
@@ -142,6 +143,15 @@ If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 
           if ($entree -eq 'q') {
                return
+          } elseif ($entree -eq 'm') {
+               $adresseIPManuelle = Read-Host "Entrer une adresse IP"
+               try {
+                    Limit-AdresseIP -AdresseIP $adresseIPManuelle
+                    New-NetIpAddress –InterfaceAlias $NomConnexion -IpAddress $adresseIPManuelle -PrefixLength 24
+                    exit
+               } catch {
+                    Write-Host $adresseIPmanuelle "invalide"
+               }
           } else {
                $index = [int]$entree
                foreach ($elt in $AdressesIP) {
