@@ -1,5 +1,5 @@
 $NomConnexion = "Ethernet 2"
-$configuration = @()
+$configuration = [System.Collections.ArrayList]@()
 
 #Pour test
 function Limit-AdresseIP {
@@ -51,18 +51,52 @@ function Limit-Chaine {
 
 #Fin des fonctions utilisée pour le test
 
-
-
-
+# .SYNOPSIS
+# Fonction de test d'une entrée du fichier de configuration
+#
+# .DESCRIPTION
+# Limit-Configuration réalise different tests afin de vérifier que l'entrée peut être traitée par le script.
+# La fonction attend une chaîne de caractère du type "index;nom;adresseIP;masque;passerelle;serveurDns" avec :
+# - index : entier réprésentant l'index qui sera à taper pour sélectionner l'adresse IP
+# - nom : description de l'adresse
+# - adresseIP : 0 ou adresse IP valide. Si 0, paramétrage du DHCP
+# - masque : entier représentant le masque de sous réseau (8 pour 255.0.0.0, 16 pour 255.255.0.0, 24 pour 255.255.255.0)
+# - passerelle : 0 ou adresse IP valide. Si 0, auncune passerelle n'est indiquée.
+# - serveurDNS : 0 ou adresse IP valide. Si 0, aucun serveur DNS paramétré.
+#
+# .PARAMETER ligne
+# ligne représente une ligne du fichier de configuration
+# La fonction attend une chaîne de caractère du type "index;nom;adresseIP;masque;passerelle;serveurDns" avec :
+# - index : entier réprésentant l'index qui sera à taper pour sélectionner l'adresse IP
+# - nom : description de l'adresse
+# - adresseIP : 0 ou adresse IP valide. Si 0, paramétrage du DHCP
+# - masque : entier représentant le masque de sous réseau (8 pour 255.0.0.0, 16 pour 255.255.0.0, 24 pour 255.255.255.0)
+# - passerelle : 0 ou adresse IP valide. Si 0, auncune passerelle n'est indiquée.
+# - serveurDNS : 0 ou adresse IP valide. Si 0, aucun serveur DNS paramétré.
+#
+# .EXAMPLE
+# Limit-Configuration -ligne "0;DHCP;0;24;0;0"
+# 
+# .EXAMPLE
+# Limit-Configuration -ligne "1;Alarme;192.168.1.110;24;0;0"
+#
+# .EXAMPLE
+# Limit-Configuration -ligne "2;Fixe;192.168.1.237;24;192.168.1.1;192.168.1.1"
+#
+# .NOTES
+# Aucune remarque complémentaire
+#
+# .LINK
+# Voir lien github pour dernière version
 function Limit-Configuration {
     param (
         [string]$ligne
     )
-    #"0,DHCP,0,24,0,0"
+    #"0;DHCP;0;24;0;0"
     $Erreur = $false
     $Description = ""
 
-    Write-Host "Analyse de :" $ligne
+    Write-Debug "Analyse de : $ligne"
     $Tableau = $ligne -split ";"
     try {
         #Write-Host $Tableau.Length " - " $Tableau
@@ -104,7 +138,37 @@ function Limit-Configuration {
    }
 }
 
+# .SYNOPSIS
+# Lit un fichier de configuration
+#
+# .DESCRIPTION
+# Get-Config lit un fichier de configuration et met à jour les deux variables suivantes : 
+# - $NomConnexion
+# - $configuration = [System.Collections.ArrayList]@()
+# 
+#   $NomConnexion prend l'entrée du fichier débutant par "NomConnexion=". Nom Connexion doit correspondre à un nom de carte réseau dans le PC.
+#   $configuration prend les entrées débutant par "IP=" et ayant la forme suivante :"index;nom;adresseIP;masque;passerelle;serveurDns" avec :
+# - index : entier réprésentant l'index qui sera à taper pour sélectionner l'adresse IP
+# - nom : description de l'adresse
+# - adresseIP : 0 ou adresse IP valide. Si 0, paramétrage du DHCP
+# - masque : entier représentant le masque de sous réseau (8 pour 255.0.0.0, 16 pour 255.255.0.0, 24 pour 255.255.255.0)
+# - passerelle : 0 ou adresse IP valide. Si 0, auncune passerelle n'est indiquée.
+# - serveurDNS : 0 ou adresse IP valide. Si 0, aucun serveur DNS paramétré.
+#
+# .PARAMETER ligne
+# ligne représente une ligne du fichier de configuration
+# La fonction attend une chaîne de caractère du type "index;nom;adresseIP;masque;passerelle;serveurDns" avec :
+# - index : entier réprésentant l'index qui sera à taper pour sélectionner l'adresse IP
+# - nom : description de l'adresse
+# - adresseIP : 0 ou adresse IP valide. Si 0, paramétrage du DHCP
+# - masque : entier représentant le masque de sous réseau (8 pour 255.0.0.0, 16 pour 255.255.0.0, 24 pour 255.255.255.0)
+# - passerelle : 0 ou adresse IP valide. Si 0, auncune passerelle n'est indiquée.
+# - serveurDNS : 0 ou adresse IP valide. Si 0, aucun serveur DNS paramétré.
+#
 function Get-Config {
+
+    [CmdletBinding()] #<<-- This turns a regular function into an advanced function
+
     $NumberOfLinesMax = 200
 
     $Conf = Get-Content -Path .\ListeAdressesIP.conf -TotalCount $NumberOfLinesMax
@@ -121,7 +185,7 @@ function Get-Config {
                 $Tableau = $Ligne -split "="
                 if ($Tableau.length -eq 2) {
                     Limit-Configuration -ligne $Tableau[1]
-                    $configuration += $Tableau[1]
+                    $configuration.Add($Tableau[1])
                 }
             }
         } catch {
@@ -129,10 +193,11 @@ function Get-Config {
         }
     }
 
-    Write-Host "$NomConnexion = " $NomConnexion
+    Write-Debug "NomConnexion = $NomConnexion"
     foreach ($elt in $configuration) {
-        Write-Host $elt
+        Write-Debug $elt
     }
+    #Write-Host $configuration[1]
 }
 
 #Programme

@@ -11,16 +11,16 @@
 #############################################################    
 
 ######## Initialisation #####################################
-$configuration = @()
+$configuration = [System.Collections.ArrayList]@()
 $adressesIP = [System.Collections.ArrayList]@()
 
 ######## Paramétrage ########################################
 
 #Numéro à sélectionner, Nom connexion à sélectionner, adresse IP, masque de sous-réseau ("24" pour 255.255.255.0, "16" pour 255.255.0, "8" pour 255.0.0), adresse passerelle, adresse serveur DNS
 #Si 0 utilisation de l'adresse par défaut
-$Configuration += "0,DHCP,0,24,0,0"
-$Configuration += "1,Alarme,192.168.1.110,24,0,0"
-$Configuration += "2,Fixe,192.168.1.237,24,192.168.1.1,192.168.1.1"
+$Configuration.Add("0,DHCP,0,24,0,0")
+$Configuration.Add("1,Alarme,192.168.1.110,24,0,0")
+$Configuration.Add("2,Fixe,192.168.1.237,24,192.168.1.1,192.168.1.1")
 
 #Indiquer entre guillemet le nom de la carte réseau à modifier "Wi-Fi" ou "Ethernet 2" par exemple à chercher dans Panneau de configuration\Réseau et Internet\Connexions réseau
 #$NomConnexion = "Wi-Fi" 
