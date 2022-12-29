@@ -7,13 +7,13 @@ Pour utiliser le script, commencez par configurer le fichier ChangementAdresseIP
 ![Image de la carte réseau](/Images/00%20-%20Reseau.png)
 
 - IP= : Correspond à une configuration de carte à appliquer. 
-    _La syntaxe est la suivante :
-    Numéro à sélectionner, Nom connexion à sélectionner, adresse IP, masque de sous-réseau ("24" pour 255.255.255.0, "16" pour 255.255.0, "8" pour 255.0.0), adresse passerelle, adresse serveur DNS
-    Si 0 utilisation de l'adresse par défaut
-    Exemple :
-    * IP=0;DHCP;0;24;0;0
-    * IP=1;Alarme;192.168.1.110;24;0;0
-    * *IP=2;Fixe;192.168.1.237;24;192.168.1.1;192.168.1.1_
+>La syntaxe est la suivante :
+>Numéro à sélectionner, Nom connexion à sélectionner, adresse IP, masque de sous-réseau >("24" pour 255.255.255.0, "16" pour 255.255.0, "8" pour 255.0.0), adresse passerelle, >adresse serveur DNS
+>Si 0 utilisation de l'adresse par défaut
+>Exemple :
+>* IP=0;DHCP;0;24;0;0
+>* IP=1;Alarme;192.168.1.110;24;0;0
+>* *IP=2;Fixe;192.168.1.237;24;192.168.1.1;192.168.1.1
 
 ## Lancement
 Pour utiliser le script, plusieurs choix s'offre à vous :
