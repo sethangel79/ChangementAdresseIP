@@ -424,6 +424,7 @@ If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
      do
      {
           #Write-host $AdressesIP
+          Clear-Host
           Show-Menu
           $entree = Read-Host "Faites un choix"
 

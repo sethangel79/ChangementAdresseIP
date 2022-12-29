@@ -1,10 +1,8 @@
 # ChangementAdresseIP
 
-#TODO :
+## Configuration
+Pour utiliser le script, commencez par configurer le fichier ChangementAdresseIP.conf : 
+- NomConnexion : Doit correspondre exactement au nom de la carte réseau à modifier dans Windows (Ethernet 2 dans notre exemple)
+![Image de la carte réseau](.\Images\00 - Reseau.png)
 
-- [x] ajouter elevation des privileges    -> ok
-- [x] ajouter controle des données d'entrées -> ok
-- [x] ajouter lecture du fichier de configuration pour eviter d'entrer dans le script
-- [x] ajouter adresse IP manuelle
-- [x] tester les entrees numerique pour le choix du menu
-- [ ] éventuellement arguments de ligne de commandes
+
