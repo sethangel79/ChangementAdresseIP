@@ -171,31 +171,48 @@ function Get-Config {
 
     $NumberOfLinesMax = 200
 
-    $Conf = Get-Content -Path .\ListeAdressesIP.conf -TotalCount $NumberOfLinesMax
 
-    foreach ($Ligne in $Conf) {
-        try {
-            if ($Ligne.StartsWith("NomConnexion")) {
-                $Tableau = $Ligne -split "="
-                if ($Tableau.length -eq 2) {
-                    $NomConnexion = $Tableau[1]
+    $AdresseFichierConfiguration = $PSCommandPath -replace ".ps1", ".conf"
+    Write-Host $AdresseFichierConfiguration
+
+    $TestConfigPath =  Test-Path -Path $AdresseFichierConfiguration
+    if ($TestConfigPath) {
+        $Conf = Get-Content -Path .\ListeAdressesIP.conf -TotalCount $NumberOfLinesMax
+
+        foreach ($Ligne in $Conf) {
+            try {
+                if ($Ligne.StartsWith("NomConnexion")) {
+                    $Tableau = $Ligne -split "="
+                    if ($Tableau.length -eq 2) {
+                        $NomConnexion = $Tableau[1]
+                    }
                 }
-            }
-            if ($Ligne.StartsWith("IP")) {
-                $Tableau = $Ligne -split "="
-                if ($Tableau.length -eq 2) {
-                    Limit-Configuration -ligne $Tableau[1]
-                    $configuration.Add($Tableau[1])
+                if ($Ligne.StartsWith("IP")) {
+                    $Tableau = $Ligne -split "="
+                    if ($Tableau.length -eq 2) {
+                        Limit-Configuration -ligne $Tableau[1]
+                        $configuration.Add($Tableau[1])
+                    }
                 }
+            } catch {
+                Write-Host $Ligne "n''a pas le format attendu"
             }
-        } catch {
-            Write-Host $Ligne "n''a pas le format attendu"
         }
-    }
 
-    Write-Debug "NomConnexion = $NomConnexion"
-    foreach ($elt in $configuration) {
-        Write-Debug $elt
+        Write-Debug "NomConnexion = $NomConnexion"
+        foreach ($elt in $configuration) {
+            Write-Debug $elt
+        }
+    } else {
+        Write-Host "Fichier de configuration non trouvé. Attendu $AdresseFichierConfiguration"
+        #Configuration par défaut
+        $Configuration.Add("0,DHCP,0,24,0,0")
+        $Configuration.Add("1,Alarme,192.168.1.110,24,0,0")
+        $Configuration.Add("2,Fixe,192.168.1.237,24,192.168.1.1,192.168.1.1")
+
+        #Indiquer entre guillemet le nom de la carte réseau à modifier "Wi-Fi" ou "Ethernet 2" par exemple à chercher dans Panneau de configuration\Réseau et Internet\Connexions réseau
+        $NomConnexion = "Ethernet 2" 
+
     }
     #Write-Host $configuration[1]
 }
