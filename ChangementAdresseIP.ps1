@@ -11,20 +11,21 @@
 #############################################################    
 
 ######## Initialisation #####################################
-$configuration = [System.Collections.ArrayList]@()
-$adressesIP = [System.Collections.ArrayList]@()
+$Global:Configuration = [System.Collections.ArrayList]@()
+$Global:adressesIP = [System.Collections.ArrayList]@()
+$Global:NomConnexion = [String]@()
 
 ######## Paramétrage ########################################
 
 #Numéro à sélectionner, Nom connexion à sélectionner, adresse IP, masque de sous-réseau ("24" pour 255.255.255.0, "16" pour 255.255.0, "8" pour 255.0.0), adresse passerelle, adresse serveur DNS
 #Si 0 utilisation de l'adresse par défaut
-$Configuration.Add("0,DHCP,0,24,0,0")
-$Configuration.Add("1,Alarme,192.168.1.110,24,0,0")
-$Configuration.Add("2,Fixe,192.168.1.237,24,192.168.1.1,192.168.1.1")
+#$Configuration.Add("0,DHCP,0,24,0,0")
+#$Configuration.Add("1,Alarme,192.168.1.110,24,0,0")
+#$Configuration.Add("2,Fixe,192.168.1.237,24,192.168.1.1,192.168.1.1")
 
-#Indiquer entre guillemet le nom de la carte réseau à modifier "Wi-Fi" ou "Ethernet 2" par exemple à chercher dans Panneau de configuration\Réseau et Internet\Connexions réseau
-#$NomConnexion = "Wi-Fi" 
-$NomConnexion = "Ethernet 2" 
+#Indiquer entre guillemet le nom de la carte réseau à modifier "Wi-Fi" ou "Ethernet 2" par exemple à chercher dans Panneau de Configuration\Réseau et Internet\Connexions réseau
+#$Global:NomConnexion = "Wi-Fi" 
+#$Global:NomConnexion = "Ethernet 2" 
 
 ######## Programmation ######################################
 
@@ -149,10 +150,10 @@ function Get-Masque {
 }
 
 # .SYNOPSIS
-# Fonction de test d'une entrée du fichier de configuration
+# Fonction de test d'une entrée du fichier de Configuration
 #
 # .DESCRIPTION
-# Get-AdressesIP crée à partir de la variables $configuration des objets de type myAdresse et les ajoute au tableau de myAdresse $adresseIP
+# Get-AdressesIP crée à partir de la variables $Configuration des objets de type myAdresse et les ajoute au tableau de myAdresse $adresseIP
 # myAdresse : $myAdresse = [PSCustomObject]@{
 #     index : int
 #     nom : string
@@ -162,7 +163,7 @@ function Get-Masque {
 #     serveurDNS : adresse IP ou 0
 function Get-AdressesIP {
      foreach ($elem in $Configuration) {
-          $tab = $elem -split ","
+          $tab = $elem -split ";"
 
           #Write-Host $tab.count
           #Si la chaine est coorecte
@@ -189,6 +190,8 @@ function Get-AdressesIP {
                } catch {
                     Write-Host $elt "n''a pas été ajoutée :" $_
                }
+          } else {
+               Write-Host $elt "n''a pas été ajoutée : problème de tableau 6 éléments n''ont pas été trouvés"
           }
      }
 }
@@ -207,7 +210,7 @@ function Get-AdressesIP {
 # - serveurDNS : 0 ou adresse IP valide. Si 0, aucun serveur DNS paramétré.
 #
 # .PARAMETER ligne
-# ligne représente une ligne du fichier de configuration
+# ligne représente une ligne du fichier de Configuration
 # La fonction attend une chaîne de caractère du type "index;nom;adresseIP;masque;passerelle;serveurDns" avec :
 # - index : entier réprésentant l'index qui sera à taper pour sélectionner l'adresse IP
 # - nom : description de l'adresse
@@ -282,15 +285,15 @@ function Limit-Configuration {
 
 
 # .SYNOPSIS
-# Lit un fichier de configuration
+# Lit un fichier de Configuration
 #
 # .DESCRIPTION
-# Get-Config lit un fichier de configuration et met à jour les deux variables suivantes : 
-# - $NomConnexion
-# - $configuration = [System.Collections.ArrayList]@()
+# Get-Config lit un fichier de Configuration et met à jour les deux variables suivantes : 
+# - $Global:NomConnexion
+# - $Configuration = [System.Collections.ArrayList]@()
 # 
-#   $NomConnexion prend l'entrée du fichier débutant par "NomConnexion=". Nom Connexion doit correspondre à un nom de carte réseau dans le PC.
-#   $configuration prend les entrées débutant par "IP=" et ayant la forme suivante :"index;nom;adresseIP;masque;passerelle;serveurDns" avec :
+#   $Global:NomConnexion prend l'entrée du fichier débutant par "NomConnexion=". Nom Connexion doit correspondre à un nom de carte réseau dans le PC.
+#   $Configuration prend les entrées débutant par "IP=" et ayant la forme suivante :"index;nom;adresseIP;masque;passerelle;serveurDns" avec :
 # - index : entier réprésentant l'index qui sera à taper pour sélectionner l'adresse IP
 # - nom : description de l'adresse
 # - adresseIP : 0 ou adresse IP valide. Si 0, paramétrage du DHCP
@@ -299,7 +302,7 @@ function Limit-Configuration {
 # - serveurDNS : 0 ou adresse IP valide. Si 0, aucun serveur DNS paramétré.
 #
 # .PARAMETER ligne
-# ligne représente une ligne du fichier de configuration
+# ligne représente une ligne du fichier de Configuration
 # La fonction attend une chaîne de caractère du type "index;nom;adresseIP;masque;passerelle;serveurDns" avec :
 # - index : entier réprésentant l'index qui sera à taper pour sélectionner l'adresse IP
 # - nom : description de l'adresse
@@ -310,6 +313,8 @@ function Limit-Configuration {
 #
 function Get-Config {
 
+     $DebugPreference = "continue"
+ 
      [CmdletBinding()] #<<-- This turns a regular function into an advanced function
  
      $NumberOfLinesMax = 200
@@ -320,21 +325,21 @@ function Get-Config {
  
      $TestConfigPath =  Test-Path -Path $AdresseFichierConfiguration
      if ($TestConfigPath) {
-         $Conf = Get-Content -Path .\ListeAdressesIP.conf -TotalCount $NumberOfLinesMax
+         $Conf = Get-Content -Path $AdresseFichierConfiguration -TotalCount $NumberOfLinesMax
  
          foreach ($Ligne in $Conf) {
              try {
                  if ($Ligne.StartsWith("NomConnexion")) {
                      $Tableau = $Ligne -split "="
                      if ($Tableau.length -eq 2) {
-                         $NomConnexion = $Tableau[1]
+                         $Global:NomConnexion = $Tableau[1].Trim()
                      }
                  }
                  if ($Ligne.StartsWith("IP")) {
                      $Tableau = $Ligne -split "="
                      if ($Tableau.length -eq 2) {
                          Limit-Configuration -ligne $Tableau[1]
-                         $configuration.Add($Tableau[1])
+                         $Configuration.Add($Tableau[1])
                      }
                  }
              } catch {
@@ -342,26 +347,39 @@ function Get-Config {
              }
          }
  
-         Write-Debug "NomConnexion = $NomConnexion"
-         foreach ($elt in $configuration) {
+         Write-Debug "NomConnexion = $Global:NomConnexion "
+         foreach ($elt in $Configuration) {
              Write-Debug $elt
-         }
+         } 
      } else {
-         Write-Host "Fichier de configuration non trouvé. Attendu $AdresseFichierConfiguration"
+         Write-Host "Fichier de Configuration non trouvé. Attendu $AdresseFichierConfiguration"
          #Configuration par défaut
          $Configuration.Add("0,DHCP,0,24,0,0")
          $Configuration.Add("1,Alarme,192.168.1.110,24,0,0")
          $Configuration.Add("2,Fixe,192.168.1.237,24,192.168.1.1,192.168.1.1")
  
-         #Indiquer entre guillemet le nom de la carte réseau à modifier "Wi-Fi" ou "Ethernet 2" par exemple à chercher dans Panneau de configuration\Réseau et Internet\Connexions réseau
-         $NomConnexion = "Ethernet 2" 
+         #Indiquer entre guillemet le nom de la carte réseau à modifier "Wi-Fi" ou "Ethernet 2" par exemple à chercher dans Panneau de Configuration\Réseau et Internet\Connexions réseau
+         $Global:NomConnexion  = "Ethernet 2" 
  
      }
-     #Write-Host $configuration[1]
+     #Write-Host $Configuration[1]
  }
 
 
+<#
+.SYNOPSIS
+# Affiche le menu en fonction de la variable AdressesIP
 
+.DESCRIPTION
+Affiche pour chaque élément de AdresseIP l'index et le nom de l'adresse à afficher.
+Propose aussi une saisie manuelle avec M ou de quitter le script avec Q
+
+.PARAMETER Title
+Titre à afficher
+
+.EXAMPLE
+Show-Menu -Title "Titre du menu"
+#>
 function Show-Menu {
      param (
           [string]$Title = 'Sélection d''une connexion réseau'
@@ -388,6 +406,8 @@ If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
      Break
 } else {
 
+     Get-Config
+     Write-Host "Nom connexion = $Global:NomConnexion "
      Get-AdressesIP
 
      do
@@ -404,17 +424,18 @@ If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
                     Limit-AdresseIP -AdresseIP $adresseIPManuelle
                     $masque = Get-masque -AdresseIP $adresseIPManuelle
 
-                    Set-NetIPInterface -InterfaceAlias $NomConnexion -Dhcp Enabled
+                    Write-Debug "NomConnexion = $Global:NomConnexion "
+                    Set-NetIPInterface -InterfaceAlias $Global:NomConnexion -Dhcp Enabled
 
                     #Suppression de la passerelle si elle existe
                     try {
-                         Remove-NetRoute -InterfaceAlias $NomConnexion -Confirm:$false
+                         Remove-NetRoute -InterfaceAlias $Global:NomConnexion -Confirm:$false
                     } catch {
                          Write-Host "Aucune passerelle à supprimer"
                     }
 
                     #Definition de l'adresse
-                    New-NetIpAddress –InterfaceAlias $NomConnexion -IpAddress $adresseIPManuelle -PrefixLength $masque
+                    New-NetIpAddress –InterfaceAlias $Global:NomConnexion -IpAddress $adresseIPManuelle -PrefixLength $masque
                     exit
                } catch {
                     Write-Host $adresseIPmanuelle "invalide"
@@ -424,31 +445,32 @@ If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
                foreach ($elt in $AdressesIP) {
                     if ($elt.index -eq $index) {
                          write-host $elt.nom "sélectionné"
-
+                         
+                         Write-Host "NomConnexion = $Global:NomConnexion "
                          #Adresse IP
                          #si DHCP
-                         Set-NetIPInterface -InterfaceAlias $NomConnexion -Dhcp Enabled
+                         Set-NetIPInterface -InterfaceAlias $Global:NomConnexion -Dhcp Enabled
 
                          #Suppression de la passerelle si elle existe
                          try {
-                              Remove-NetRoute -InterfaceAlias $NomConnexion -Confirm:$false
+                              Remove-NetRoute -InterfaceAlias $Global:NomConnexion -Confirm:$false
                          } catch {
                               Write-Host "Aucune passerelle à supprimer"
                          }
 
                          if ($elt.adresseIP -ne '0') {
                          if ($elt.passerelle -eq '0') {                             
-                              New-NetIpAddress –InterfaceAlias $NomConnexion -IpAddress $elt.adresseIP -PrefixLength $elt.masque
+                              New-NetIpAddress –InterfaceAlias $Global:NomConnexion -IpAddress $elt.adresseIP -PrefixLength $elt.masque
                          } else {
-                              New-NetIpAddress –InterfaceAlias $NomConnexion -IpAddress $elt.adresseIP -PrefixLength $elt.masque -DefaultGateway $elt.passerelle
+                              New-NetIpAddress –InterfaceAlias $Global:NomConnexion -IpAddress $elt.adresseIP -PrefixLength $elt.masque -DefaultGateway $elt.passerelle
                          }
                          }
 
                          #DNS
                          if ($elt.serveurDNS -eq '0') {
-                              Set-DnsClientServerAddress –InterfaceAlias $NomConnexion -ResetServerAddresses
+                              Set-DnsClientServerAddress –InterfaceAlias $Global:NomConnexion -ResetServerAddresses
                          } else {
-                              Set-DnsClientServerAddress -InterfaceAlias $NomConnexion -ServerAddresses $elt.serveurDNS
+                              Set-DnsClientServerAddress -InterfaceAlias $Global:NomConnexion -ServerAddresses $elt.serveurDNS
                          }
 
                          #Start-Sleep -Seconds 1.5

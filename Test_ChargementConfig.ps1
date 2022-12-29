@@ -167,6 +167,8 @@ function Limit-Configuration {
 #
 function Get-Config {
 
+    $DebugPreference = "continue"
+
     [CmdletBinding()] #<<-- This turns a regular function into an advanced function
 
     $NumberOfLinesMax = 200
@@ -177,7 +179,7 @@ function Get-Config {
 
     $TestConfigPath =  Test-Path -Path $AdresseFichierConfiguration
     if ($TestConfigPath) {
-        $Conf = Get-Content -Path .\ListeAdressesIP.conf -TotalCount $NumberOfLinesMax
+        $Conf = Get-Content -Path $AdresseFichierConfiguration -TotalCount $NumberOfLinesMax
 
         foreach ($Ligne in $Conf) {
             try {
@@ -192,6 +194,7 @@ function Get-Config {
                     if ($Tableau.length -eq 2) {
                         Limit-Configuration -ligne $Tableau[1]
                         $configuration.Add($Tableau[1])
+                        Write-Debug "$Tableau[1] ajoute"
                     }
                 }
             } catch {
