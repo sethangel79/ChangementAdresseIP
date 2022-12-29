@@ -104,7 +104,7 @@ function Limit-Masque {
 # Chaîne de caractère dont la longueur doit être testée
 #
 # .EXAMPLE
-# LImite-Chaine "Ma chaîne de caractères"
+# Limite-Chaine "Ma chaîne de caractères"
 function Limit-Chaine {
      param (
           [string]$chaine
@@ -258,8 +258,8 @@ function Limit-Configuration {
          #Write-Host $Tableau.Length " - " $Tableau
  
          if ($Tableau.Length -eq 6) {
-             #Write-Host $Tableau[0]
              $index = [int]$Tableau[0]
+             Write-Debug "index: $index"
              
              #Write-Host $Tableau[1]
              Limit-Chaine -chaine $Tableau[1]
@@ -487,9 +487,6 @@ If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
                          } else {
                               Set-DnsClientServerAddress -InterfaceAlias $Global:NomConnexion -ServerAddresses $elt.serveurDNS
                          }
-
-                         #Start-Sleep -Seconds 1.5
-                         
                          exit
                     }
                }
