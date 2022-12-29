@@ -138,16 +138,27 @@ function Get-Masque {
      param (
           [string]$adressesIP
      )
-     $tab = $adressesIP -split "."
+
+     #$DebugPreference = "continue"
+
+     Write-Debug "Adresse IP parametre : $adressesIP"
+ 
+     $tab = $adressesIP -split "\."
+     foreach ($elt in $tab) {
+         Write-Debug $elt
+     }
+ 
      $premierNombre = [int]$tab[0]
-     if ($premierNombre -ge 0 -and $premierNombre -le 126) {
+     Write-Debug $premierNombre
+     
+     if (($premierNombre -ge 0) -and ($premierNombre -le 126)) {
           return 8
      } elseif ($premierNombre -ge 128 -and $premierNombre -le 191) {
           return 16
      } else {
           return 24
      }
-}
+ }
 
 # .SYNOPSIS
 # Fonction de test d'une entrée du fichier de Configuration
@@ -313,7 +324,7 @@ function Limit-Configuration {
 #
 function Get-Config {
 
-     $DebugPreference = "continue"
+     #$DebugPreference = "continue"
  
      [CmdletBinding()] #<<-- This turns a regular function into an advanced function
  
@@ -422,7 +433,7 @@ If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
                $adresseIPManuelle = Read-Host "Entrer une adresse IP"
                try {
                     Limit-AdresseIP -AdresseIP $adresseIPManuelle
-                    $masque = Get-masque -AdresseIP $adresseIPManuelle
+                    
 
                     Write-Debug "NomConnexion = $Global:NomConnexion "
                     Set-NetIPInterface -InterfaceAlias $Global:NomConnexion -Dhcp Enabled
@@ -433,6 +444,10 @@ If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
                     } catch {
                          Write-Host "Aucune passerelle à supprimer"
                     }
+
+                    #Obtention du masque
+                    $masque = Get-masque -AdressesIP $adresseIPManuelle
+                    Write-Host "masque trouve: $masque"
 
                     #Definition de l'adresse
                     New-NetIpAddress –InterfaceAlias $Global:NomConnexion -IpAddress $adresseIPManuelle -PrefixLength $masque
